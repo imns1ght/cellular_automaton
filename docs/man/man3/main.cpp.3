@@ -1,0 +1,66 @@
+.TH "src/main.cpp" 3 "Fri May 17 2019" "Cellular Automaton" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+src/main.cpp
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <\&.\&./include/input\&.h>\fP
+.br
+\fC#include <\&.\&./include/life\&.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBmain\fP (int argc, char *argv[])"
+.br
+.in -1c
+.SH "Detailed Description"
+.PP 
+
+.PP
+\fBAuthor:\fP
+.RS 4
+Jefferson Bruno, Ranieri Santos 
+.RE
+.PP
+\fBDate:\fP
+.RS 4
+22/05/2019 
+.RE
+.PP
+
+.PP
+Definition in file \fBmain\&.cpp\fP\&.
+.SH "Function Documentation"
+.PP 
+.SS "int main (int argc, char * argv[])"
+
+.SS "Regras do game:"
+.PP
+.IP "1." 4
+Qualquer célula viva com menos de dois vizinhos vivos morre de solidão\&.
+.br
+
+.IP "2." 4
+Qualquer célula viva com mais de três vizinhos vivos morre de superpopulação\&.
+.br
+
+.IP "3." 4
+Qualquer célula morta com exatamente três vizinhos vivos se torna uma célula viva\&.
+.br
+
+.IP "4." 4
+Qualquer célula viva com dois ou três vizinhos vivos continua no mesmo estado para a próxima geração\&.
+.br
+
+.PP
+
+.PP
+Definition at line 17 of file main\&.cpp\&.
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Cellular Automaton from the source code\&.
