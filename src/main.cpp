@@ -8,26 +8,42 @@
 
 /** ### Regras do game:
  *
- *1. Qualquer célula viva com menos de dois vizinhos vivos morre de solidão.\n
- *2. Qualquer célula viva com mais de três vizinhos vivos morre de superpopulação.\n
- *3. Qualquer célula morta com exatamente três vizinhos vivos se torna uma célula viva.\n
- *4. Qualquer célula viva com dois ou três vizinhos vivos continua no mesmo estado para a próxima geração.\n
+ * 1. Qualquer célula viva com menos de dois vizinhos vivos morre de solidão.\n
+ * 2. Qualquer célula viva com mais de três vizinhos vivos morre de superpopulação.\n
+ * 3. Qualquer célula morta com exatamente três vizinhos vivos se torna uma célula viva.\n
+ * 4. Qualquer célula viva com dois ou três vizinhos vivos continua no mesmo estado para a próxima geração.\n
+ *
+ * A simulacão deve ser finalizada em três situações diferentes: 
+ * 1. o número máximo de gerações foi alcançado (se esse valor for especificado);\n
+ * 2. a configuração da geração atual é considerada estável (não muda em relação a anterior);\n
+ * 3. a configuração da geração atual é extinta (todas celulas mortas).\n 
  */
 int main(int argc, char* argv[]) {
-        Life game;
+        Simulation game;
 
-	// Show informations if success
-	if (game.initialize(argc, argv) != -1) {
-		// #TEST
-		std::cout << game.getNumRows() << " " << game.getNumCol() << std::endl;
-        	std::cout << game.getCellChar() << std::endl;
-		game.print_board();
-		std::cout << std::endl;
-		game.print_matrix();    
-        	std::cout << std::endl;
-        	game.print_options();
-        	std::cout << std::endl;
-	}
+	// Set up simulation.
+        game.initialize(argc, argv);
+
+        // Initial message.
+        game.print_initial_msg();
+
+        /*
+        // Game Loop
+        while (!game.game_over()) {
+                game.process_events(); // Verificar REGRAS.
+                game.update();         // Atualizar o board.
+                game.render();         // Monstrar config.
+        }*/
+	
+        // Initial board read from file.
+        game.print_board();
+	std::cout << std::endl;
+		
+        std::cout << "************************* DEBUG *****************************\n" << std::endl;
+        game.print_matrix();    
+        std::cout << std::endl;
+        game.print_options();
+        std::cout << std::endl;
 	
         //=== OBJECTIVE ===
         /*

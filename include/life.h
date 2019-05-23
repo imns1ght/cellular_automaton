@@ -3,79 +3,40 @@
 
 #include <getopt.h>   // getopt()
 #include <cstdlib>    // atoi()
-#include <cstring>    // memset()
 #include <fstream>    // std::ifstream
 #include <iomanip>    // setw, setfill
 #include <iostream>   // std::cout, std::cin
-#include <sstream>    // ostringstream
+#include <limits>     // std::numeric_limits
+#include <sstream>    // std::ostringstream
 #include <stdexcept>  // std::invalid_argument
 #include <string>     // std::string
 #include <vector>     // std::vector
 
-const int empty = -1;  //!< No cell
-const int dead = 0;    //!< Dead cell
-const int alive = 1;   //!< Alive cell
-
-/// Status of the cell
-class Cell {
-        int x, y;    //!< Coordinates
-        bool alive;  //!< Cell state
-};
+const int alive = 1;  //!< Alive cell
+const int dead = 0;   //!< Dead cell
 
 /// Individual life
-class Life {
+class Simulation {
         using data_type = int;                      //!< The value type.
         using pointer = data_type *;                //!< Pointer to a value stored in the container.
         using reference = data_type &;              //!< Reference to a value stored in the container.
         using const_reference = const data_type &;  //!< Const reference to a value stored in the container.
 
        private:
+        struct Cell;
         data_type num_rows, num_col;                // Dimensions of the matrix.
         char cell_char;                             // Represent the cells.
-        std::vector<std::vector<data_type>> board;  // Simulation board.
+        std::vector<std::vector<int>> board;        // Simulation board.
+        std::vector<std::vector<Cell>> log_matrix;  // Simulation board.
 
-       public:
-        /// Default constructor
-        Life() {}
-
-        /// Desconstructor
-        ~Life() {}
-
-        /// Set the number of rows
-        void setNumRows(int n) { num_rows = n; }
-
-        /// Get the number of rows
-        int getNumRows() { return num_rows; }
-
-        /// Set the number of columns.
-        void setNumCol(int n) { num_col = n; }
-
-        /// Get the number of columns
-        int getNumCol() { return num_col; }
-
-        /// Set the char that represent an alive cell
-        void setCellChar(char a) { cell_char = a; }
-
-        /// Get the char that represent an alive cell
-        char getCellChar() { return cell_char; }
-
-       private:
-        void prepare_matrix(data_type size_row, data_type size_col) {
-                num_rows = size_row;
-                num_col = size_col;
-
-                board.resize(num_rows);  // Define the number of lines
-
-                // In every row, create n columns with -1 (indicate empty space),
-                // thus this is equivalent to a num_rows x num_col.
-                for (int i = 0; i < num_rows; i++) {
-                        board[i].assign(num_col, empty);
-                }
-        }
+        /// Cell
+        struct Cell {
+                int x, y;  // Coordenates
+        };
 
         /// Save command line arguments.
         struct Options {
-                int maxgen = 100;                      //!< Maximum number of generations.
+                int maxgen = 3;                        //!< Maximum number of generations.
                 int fps = 2;                           //!< Number of generations presented per second.
                 int blocksize = 5;                     //!< Pixel size of a cell.
                 std::string alivecolor = "RED";        //!< Color name for representing alive cells.
@@ -85,6 +46,58 @@ class Life {
                 std::string outfile = "data/log.txt";  //!< Filename for the output file.
 
         } options;  //!< Initialize the struct.
+
+       public:
+        /// Default constructor
+        Simulation() {}
+
+        /// Constructor
+        Simulation(int nLin, int nCol) { prepare_board(nLin, nCol); }
+
+        /// Desconstructor
+        ~Simulation() {}
+
+        /// Set the number of rows
+        void setNumRows(int n) { num_rows = n; }
+
+        /// Get the number of rows
+        int getNumRows() { return num_rows - 2; }
+
+        /// Set the number of columns.
+        void setNumCol(int n) { num_col = n; }
+
+        /// Get the number of columns
+        int getNumCol() { return num_col - 2; }
+
+        /// Set the char that represent an alive cell
+        void setCellChar(char a) { cell_char = a; }
+
+        /// Get the char that represent an alive cell
+        char getCellChar() { return cell_char; }
+
+       private:
+        void prepare_board(int size_row, int size_col) {
+                num_rows = size_row + 2;  // Two more rows to prevent error.
+                num_col = size_col + 2;   // Two more col to prevent error.
+
+                board.resize(num_rows);  // Define the number of lines
+
+                // In every row, create n columns with -1 (indicate empty space),
+                // thus this is equivalent to a num_rows x num_col.
+                for (int i = 0; i < num_rows; i++) {
+                        board[i].assign(num_col, dead);
+                }
+        }
+
+        void prepare_log() {
+                log_matrix.resize(options.maxgen);  // Define the number of lines
+
+                // In every row, create n columns with -1 (indicate empty space),
+                // thus this is equivalent to a num_rows x num_col.
+                for (int i = 0; i < options.maxgen; i++) {
+                        log_matrix[i].resize((getNumRows() * getNumCol()) / 3);
+                }
+        }
 
         /// Read the arguments from cli.
         /*!
@@ -119,7 +132,7 @@ class Life {
                         if ((opt = getopt_long(argc, argv, "hd:m:f:s:b:a:o:", tmp, NULL)) != -1) {
                                 switch (opt) {
                                         case 'h': /* -h or --help */
-                                                show_help();
+                                                print_help();
                                                 return 0;
                                         case 'd': /* -d or --imgdir */
                                                 options.imgdir = optarg;
@@ -167,43 +180,154 @@ class Life {
         /*!
          * \return 0 if success, and -1 if failed.
          */
-        int read_file() {
+        void read_file() {
                 std::ifstream file;
-                file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+                file.exceptions(std::ifstream::badbit);
 
                 try {
+                        std::cout << ">>> Trying to open input file [" << options.inputfile << "]... ";
                         file.open(options.inputfile);  //!< Open the file in reading mode.
 
-                        file >> num_rows >> num_col;
-                        file >> cell_char;
-
-                        prepare_matrix(num_rows, num_col);  // Prepare the matrix to store the cells.
-
-                        int i = 0;
-                        std::string line;
-                        while ((std::getline(file, line)) && (i < getNumRows())) {
-                                for (auto j = 0; j < (int)line.size() && j < getNumCol(); j++) {
-                                        if (line[j] == getCellChar()) {
-                                                board[i][j] = 1;  // Alive cell
-                                        }
-                                }
-
-                                i++;
+                        if (!file) {
+                                throw std::ifstream::failure("");
                         }
 
-                        file.close();
-
                 } catch (std::ifstream::failure &e) {
-                        return -1;
+                        std::cerr << "\n\033[0;31m>>> Error: opening/reading file\033[0m\n";
+                        exit(EXIT_FAILURE);
                 }
+
+                std::cout << "done!\n";
+                std::cout << ">>> Processing data, please wait...\n";
+
+                file >> num_rows >> num_col;
+                file >> cell_char;
+
+                std::cout << ">>> Grid size: " << num_rows << " rows by " << num_col << " cols.\n";
+                std::cout << ">>> Character that represents a living cell: '" << cell_char << "'\n";
+
+                prepare_board(num_rows, num_col);  // Prepare the matrix to store the cells.
+
+                int i = 0;
+                std::string line;
+                while ((std::getline(file, line)) && (i < getNumRows() + 2)) {
+                        for (auto j = 0; j < (int)line.size() && (j < getNumCol() + 2); j++) {
+                                if (line[j] == getCellChar()) {
+                                        board[i][j + 1] = alive;  // Alive cell
+                                }
+                        }
+
+                        i++;
+                }
+
+                file.close();
+
+                std::cout << ">>> Finished reading input data file." << std::endl;
+        }
+
+        int surroundings(int i, int j) {
+                int n = 0;  // Number of neighbors
+
+                if ((i > getNumRows()) || (j > getNumCol())) {
+                        std::cerr << "\n\033[0;31m>>> Error: out of range!\033[0m\n";
+                        exit(EXIT_FAILURE);
+                }
+
+                if (board[i - 1][j - 1] == alive) {
+                        n++;
+                }
+
+                if (board[i - 1][j] == alive) {
+                        n++;
+                }
+
+                if (board[i - 1][j + 1] == alive) {
+                        n++;
+                }
+
+                if (board[i][j - 1] == alive) {
+                        n++;
+                }
+
+                if (board[i][j + 1] == alive) {
+                        n++;
+                }
+
+                if (board[i + 1][j - 1] == alive) {
+                        n++;
+                }
+
+                if (board[i + 1][j] == alive) {
+                        n++;
+                }
+
+                if (board[i + 1][j + 1] == alive) {
+                        n++;
+                }
+
+                return n;
+        }
+
+        //! Store living cells in log_matrix.
+        int setAlive(int num_generation) {
+                int m_cell = 0;  // Position of the cell (struct)
+
+                // Copy living cells from board to log of generation.
+                for (int i = 0; i <= getNumRows(); i++) {
+                        for (int j = 0; j <= getNumCol(); j++) {
+                                if (board[i][j] == alive) {
+                                        log_matrix[num_generation][m_cell].x = i;
+                                        log_matrix[num_generation][m_cell].y = j;
+                                        m_cell++;
+                                }
+                        }
+                }
+
+                return ++num_generation;  // Number of generations
+        }
+
+       public:
+        void initialize(int argc, char *argv[]) {
+                try {
+                        // Read arguments from cli.
+                        read_options(argc, argv);
+                } catch (const std::invalid_argument &ia) {
+                        std::cerr << "\033[0;31m>>> Error: " << ia.what() << "\033[0m\n";
+                        print_help();
+                        exit(EXIT_FAILURE);
+                }
+
+                // Read the config file.
+                read_file();
+
+                // Prepare the matrix to store the coordenates of living cells.
+                prepare_log();
+        }
+
+        int game_over() {
+                // #TODO
+
+                // extinct()
+                // stable()
 
                 return 0;
         }
 
-       public:
+        void process_events() {
+                // #TODO
+        }
+
+        void update() {
+                // #TODO
+        }
+
+        void render() {
+                // #TODO
+        }
+
         /// Print the command line arguments.
         void print_options() {
-                std::cout << ">>> Options <<< \n";
+                std::cout << "[Options]\n\n";
                 std::cout << "imgdir: \"" << options.imgdir << "\"" << std::endl;
                 std::cout << "maxgen: " << options.maxgen << std::endl;
                 std::cout << "fps: " << options.fps << std::endl;
@@ -218,70 +342,93 @@ class Life {
         void print_matrix() {
                 std::ostringstream data;
 
-                for (int i = 0; i < num_rows; i++) {
-                        for (int j = 0; j < num_col; j++) {
-                                data << std::setw(2) << board[i][j] << " ";
+                std::cout << "[" << num_rows << " x " << num_col << "]\n" << std::endl;
+                for (int i = 0; i < getNumRows() + 2; i++) {
+                        if (i < 10) {
+                                data << "[" << i << "]" << std::setw(2) << " ";
+                        } else {
+                                data << "[" << i << "]" << std::setw(1) << " ";
+                        }
+
+                        for (int j = 0; j < getNumCol() + 2; j++) {
+                                data << std::setw(1) << board[i][j] << " ";
                         }
                         data << '\n';
                 }
 
-                std::cout << data.str();
+                std::cout << data.str() << std::endl;
+        }
+
+        void print_log() {
+                std::ostringstream data;
+
+                for (int i = 0; i < options.maxgen; i++) {
+                        data << "\nGeneration: [" << i << "]\n" << std::endl;
+
+                        for (int j = 0; j < log_matrix[i].size(); j++) {
+                                // if ((log_matrix[i][j].x != 0) && (log_matrix[i][j].y != 0)) {
+                                data << log_matrix[i][j].x << " " << log_matrix[i][j].y << " \n";
+                                //}
+                        }
+                        data << '\n';
+                }
+
+                std::cout << data.str() << std::endl;
         }
 
         /// Print the board.
         void print_board() {
                 std::ostringstream data;
 
-                for (int i = 0; i < num_rows; i++) {
-                        data << "[ ";
-                        for (int j = 0; j < num_col; j++) {
-                                if (board[i][j] == -1) {
+                data << "\033[1;37m" << std::setfill('-') << std::setw(getNumCol() + 8) << "\033[0m"
+                     << std::endl;
+                for (int i = 1; i < getNumRows() + 1; i++) {
+                        data << "\033[1;37m| \033[0m";
+                        for (int j = 1; j < getNumCol() + 1; j++) {
+                                if (board[i][j] == dead) {
                                         data << " ";
                                 } else {
-                                        data << std::setw(1) << cell_char << "";
+                                        data << std::setw(1) << "\033[1;32m" << cell_char << "\033[0m";
                                 }
                         }
-                        data << " ]\n";
+                        data << " \033[1;37m|\033[0m\n";
                 }
+                data << "\033[1;37m" << std::setfill('-') << std::setw(getNumCol() + 8) << "\033[0m"
+                     << std::endl;
 
                 std::cout << data.str();
         }
 
         /// Show the arguments available from cli.
-        void show_help() {
-                std::cerr
-                    << "Usage: glife [<options>] <input_cfg_file>\n"
-                       "Simulation options:\n"
-                       "\t--help\t\t\tPrint this help text.\n"
-                       "\t--imgdir <path>\t\tSpecify directory where output images are written to.\n"
-                       "\t--maxgen <num>\t\tMaximum number of generations to simulate.\n"
-                       "\t--fps <num>\t\tNumber of generations presented per second.\n"
-                       "\t--blocksize <num>\tPixel size of a cell. Default = 5.\n"
-                       "\t--bkgcolor <color>\tColor name for the background. Default GREEN.\n"
-                       "\t--alivecolor <color>\tColor name for representing alive cells. Default RED.\n"
-                       "\t--outfile <filename>\tWrite the text representation of the simulation to the given "
-                       "filename.\n\n"
-                       "Available colors are:\n"
-                       "\tBLACK BLUE CRIMSON DARK_GREEN DEEP_SKY_BLUE DODGER_BLUE\n"
-                       "\tGREEN LIGHT_BLUE LIGHT_GREY LIGHT_YELLOW RED STEEL_BLUE\n"
-                       "\tWHITE YELLOW\n\n";
+        void print_help() {
+                std::cerr << "Usage: glife [<options>] <input_cfg_file>\n"
+                             "Simulation options:\n"
+                             "\t--help\t\t\tPrint this help text.\n"
+                             "\t--imgdir <path>\t\tSpecify directory where output images are written to.\n"
+                             "\t--maxgen <num>\t\tMaximum number of generations to simulate.\n"
+                             "\t--fps <num>\t\tNumber of generations presented per second.\n"
+                             "\t--blocksize <num>\tPixel size of a cell. Default = 5.\n"
+                             "\t--bkgcolor <color>\tColor name for the background. Default GREEN.\n"
+                             "\t--alivecolor <color>\tColor name for representing alive cells. Default RED.\n"
+                             "\t--outfile <filename>\tWrite the text representation of the simulation to the "
+                             "given filename.\n\n"
+                             "Available colors are:\n"
+                             "\tBLACK BLUE CRIMSON DARK_GREEN DEEP_SKY_BLUE DODGER_BLUE\n"
+                             "\tGREEN LIGHT_BLUE LIGHT_GREY LIGHT_YELLOW RED STEEL_BLUE\n"
+                             "\tWHITE YELLOW\n\n";
         }
 
-        int initialize(int argc, char *argv[]) {
-                try {
-                        read_options(argc, argv);
-                } catch (const std::invalid_argument &ia) {
-                        std::cerr << "\033[0;31m>>> Error: " << ia.what() << "\033[0m\n";
-                        show_help();
-                        return -1;
-                }
-
-                if (read_file() == -1) {
-                        std::cerr << "\033[0;31m>>> Error: Exception opening/reading/closing file\033[0m\n";
-                        return -1;
-                }
-
-                return 0;
+        // Initial message
+        void print_initial_msg() {
+                std::cerr << "\n****************************************************************\n"
+                             "Welcome to Conway’s game of Life.\n"
+                             "Running a simulation on a grid of size "
+                          << getNumRows() << " by " << getNumCol()
+                          << " in which\n"
+                             "each cell can either be occupied by an organism or not.\n"
+                             "The occupied cells change from generation to generation\n"
+                             "according to the number of neighboring cells which are alive.\n"
+                             "****************************************************************\n";
         }
 };
 
