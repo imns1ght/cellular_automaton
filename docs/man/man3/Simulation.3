@@ -1,0 +1,112 @@
+.TH "Simulation" 3 "Fri May 24 2019" "Version 0.1" "Cellular Automaton" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Simulation
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <simulation\&.h>\fP
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBSimulation\fP ()"
+.br
+.RI "Default constructor\&. "
+.ti -1c
+.RI "\fBSimulation\fP (int nLin, int nCol)"
+.br
+.RI "Receive the dimensions of the petri_dish\&. "
+.ti -1c
+.RI "\fB~Simulation\fP ()"
+.br
+.RI "Desconstructor\&. "
+.ti -1c
+.RI "void \fBinitialize\fP (int argc, char *argv[])"
+.br
+.RI "Start the simulation reading configurations from cli and file\&. "
+.ti -1c
+.RI "bool \fBgame_over\fP ()"
+.br
+.RI "Runs while extinction, stability, or maximum generation is not reached\&. "
+.ti -1c
+.RI "void \fBprocess_events\fP ()"
+.br
+.RI "Apply the rules of conway's game of life, defining which cells will live\&. "
+.ti -1c
+.RI "void \fBupdate\fP ()"
+.br
+.RI "Update the petri_dish with the new generation, adding and removing cells\&. "
+.ti -1c
+.RI "void \fBrender\fP ()"
+.br
+.RI "Process the output (text and images)\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+Definition at line 24 of file simulation\&.h\&.
+.SH "Constructor & Destructor Documentation"
+.PP 
+.SS "Simulation::Simulation ()"
+
+.PP
+Default constructor\&. 
+.PP
+Definition at line 3 of file simulation\&.cpp\&.
+.SS "Simulation::Simulation (int nLin, int nCol)"
+
+.PP
+Receive the dimensions of the petri_dish\&. 
+.PP
+Definition at line 5 of file simulation\&.cpp\&.
+.SS "Simulation::~Simulation ()"
+
+.PP
+Desconstructor\&. 
+.PP
+Definition at line 19 of file simulation\&.cpp\&.
+.SH "Member Function Documentation"
+.PP 
+.SS "bool Simulation::game_over ()"
+
+.PP
+Runs while extinction, stability, or maximum generation is not reached\&. 
+.PP
+\fBReturns:\fP
+.RS 4
+true if extintion, stabilty or maximum generation has been reached\&. 
+.RE
+.PP
+
+.PP
+Definition at line 23 of file game_loop\&.cpp\&.
+.SS "void Simulation::initialize (int argc, char * argv[])"
+
+.PP
+Start the simulation reading configurations from cli and file\&. 
+.PP
+Definition at line 3 of file game_loop\&.cpp\&.
+.SS "void Simulation::process_events ()"
+
+.PP
+Apply the rules of conway's game of life, defining which cells will live\&. 
+.PP
+Definition at line 37 of file game_loop\&.cpp\&.
+.SS "void Simulation::render ()"
+
+.PP
+Process the output (text and images)\&. 
+.PP
+Definition at line 79 of file game_loop\&.cpp\&.
+.SS "void Simulation::update ()"
+
+.PP
+Update the petri_dish with the new generation, adding and removing cells\&. 
+.PP
+Definition at line 42 of file game_loop\&.cpp\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Cellular Automaton from the source code\&.
