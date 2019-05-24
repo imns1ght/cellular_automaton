@@ -16,7 +16,6 @@
 #include <string>     // std::string
 #include <vector>     // std::vector
 
-//! Auxiliar constants
 const int alive = 1;              //!< Alive cell.
 const int dead = 0;               //!< Dead cell.
 const int int_size = 2147483647;  //!< Standard value to maximum number of generations, "Infinite".
