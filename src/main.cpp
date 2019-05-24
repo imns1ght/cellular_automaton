@@ -25,43 +25,15 @@ int main(int argc, char* argv[]) {
         game.initialize(argc, argv);
 
         // Initial message.
-        game.print_initial_msg();
-
-        /*
-        // Game Loop
-        while (!game.game_over()) {
-                game.process_events(); // Verificar REGRAS.
-                game.update();         // Atualizar o board.
-                game.render();         // Monstrar config.
-        }*/
-	
-        // Initial board read from file.
-        game.print_board();
-	std::cout << std::endl;
-		
-        std::cout << "************************* DEBUG *****************************\n" << std::endl;
-        game.print_matrix();    
-        std::cout << std::endl;
-        game.print_options();
-        std::cout << std::endl;
-	
-        //=== OBJECTIVE ===
-        /*
-        life::lifeGame game;
-
-        // Set up simulation
-        game.initialize(argc, argv);
-
-        // Initial message
         game.render();
 
         // Game Loop
         while (!game.game_over()) {
-                game.process_events();
-                game.update();
-                game.render();
+                game.process_events(); // Verificar REGRAS.
+                game.update();         // Atualizar o board.
+                game.render();         // Exibir o board
+                usleep(microseconds);
         }
-        */
 
         return 0;
 }
