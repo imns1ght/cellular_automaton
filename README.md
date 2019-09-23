@@ -4,6 +4,10 @@
 
 This project is focused on implementation of a celullar automaton, the conway's game of life.
 
+## TODO
+- [ ] Review this old code
+- [ ] Write a better README.md :P
+
 ## Compiling and Usage
 
 1. Download the project and moves into the root directory
